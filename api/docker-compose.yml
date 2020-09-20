@@ -29,40 +29,6 @@ services:
     networks:
       - backend
 
-  # db:
-  #   image: mysql:5.7
-  #   container_name: employee-svc-db
-  #   ports: 
-  #     - ${DB_PORT}:3306
-  #   restart: on-failure
-  #   environment: 
-  #     - MYSQL_ROOT_HOST=${DB_HOST} 
-  #     - MYSQL_USER=${DB_USER}
-  #     - MYSQL_PASSWORD=${DB_PASSWORD}
-  #     - MYSQL_DATABASE=${DB_NAME}
-  #     - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-  #   volumes:
-  #     - sql:/var/lib/mysql
-  #   networks:
-  #     - backend
-  
-  # phpmyadmin:
-  #   image: phpmyadmin/phpmyadmin
-  #   container_name: employee-svc-phpmyadmin
-  #   depends_on:
-  #     - db
-  #   environment:
-  #     - PMA_HOST=db # Note the "mysql". Must be the name of the what you used as the mysql service.
-  #     - PMA_USER=${DB_USER}
-  #     - PMA_PORT=${DB_PORT}
-  #     - PMA_PASSWORD=${DB_PASSWORD}
-  #   ports:
-  #     - 9090:80
-  #   restart: always
-  #   networks:
-  #     - backend
-
-
 volumes:
   api:
     driver: local

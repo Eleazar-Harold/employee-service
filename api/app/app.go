@@ -21,21 +21,25 @@ type App struct {
 // Initialize with predefined configuration
 func (a *App) Initialize(config *config.Config) {
 	var err error
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s",
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		config.DB.Host,
 		config.DB.Port,
 		config.DB.Username,
-		config.DB.Name,
 		config.DB.Password,
+		config.DB.Name,
 	)
 
-	log.Printf("DB URI: %s\n", dsn)
+	log.Printf("DB URI: %s\n", psqlInfo)
 
-	a.DB, err = gorm.Open(config.DB.Dialect, dsn)
+	a.DB, err = gorm.Open(config.DB.Dialect, psqlInfo)
 	if err != nil {
 		log.Printf("Could not connect to %s database\n", config.DB.Dialect)
 	} else {
 		log.Printf("We are connected to the %s database\n", config.DB.Dialect)
+	}
+
+	if err = a.DB.DB().Ping(); err != nil {
+		log.Printf("DB Error: %s", err.Error())
 	}
 
 	a.DB.AutoMigrate(&model.Employee{}) //database migration

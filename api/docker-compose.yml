@@ -1,0 +1,75 @@
+version: '3'
+services:
+  app:
+    container_name: employee-svc-app
+    build: .
+    ports: 
+      - ${APPORT}:4321 
+    restart: on-failure
+    volumes:
+      - api:/usr/src/app/
+    depends_on:
+      - db
+    networks:
+      - backend
+  
+  db:
+    image: postgres:alpine
+    container_name: employee-svc-db
+    environment:
+      - POSTGRES_USER=${DB_USER}  
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST} 
+    ports:
+      - "${DB_PORT}:5432"
+    restart: on-failure
+    volumes:
+      - sql:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  # db:
+  #   image: mysql:5.7
+  #   container_name: employee-svc-db
+  #   ports: 
+  #     - ${DB_PORT}:3306
+  #   restart: on-failure
+  #   environment: 
+  #     - MYSQL_ROOT_HOST=${DB_HOST} 
+  #     - MYSQL_USER=${DB_USER}
+  #     - MYSQL_PASSWORD=${DB_PASSWORD}
+  #     - MYSQL_DATABASE=${DB_NAME}
+  #     - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+  #   volumes:
+  #     - sql:/var/lib/mysql
+  #   networks:
+  #     - backend
+  
+  # phpmyadmin:
+  #   image: phpmyadmin/phpmyadmin
+  #   container_name: employee-svc-phpmyadmin
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     - PMA_HOST=db # Note the "mysql". Must be the name of the what you used as the mysql service.
+  #     - PMA_USER=${DB_USER}
+  #     - PMA_PORT=${DB_PORT}
+  #     - PMA_PASSWORD=${DB_PASSWORD}
+  #   ports:
+  #     - 9090:80
+  #   restart: always
+  #   networks:
+  #     - backend
+
+
+volumes:
+  api:
+    driver: local
+  sql:
+    driver: local
+
+networks:
+  backend:
+    driver: bridge
+

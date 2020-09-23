@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/eleazar-harold/employee-service/api/app"
 	"github.com/eleazar-harold/employee-service/api/config"
@@ -19,5 +18,4 @@ func main() {
 
 	app := &app.App{}
 	app.Initialize(config)
-	app.Run(":" + os.Getenv("APPORT"))
 }

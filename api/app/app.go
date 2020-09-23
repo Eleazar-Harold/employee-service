@@ -4,18 +4,23 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
-	"github.com/eleazar-harold/employee-service/api/app/handler"
-	"github.com/eleazar-harold/employee-service/api/app/model"
+	"github.com/eleazar-harold/employee-service/api/app/handlers"
+	"github.com/eleazar-harold/employee-service/api/app/services"
 	"github.com/eleazar-harold/employee-service/api/config"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
 )
 
 // App has router and db instances
 type App struct {
-	Router *mux.Router
-	DB     *gorm.DB
+	sm *mux.Router
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Initialize with predefined configuration
@@ -31,90 +36,24 @@ func (a *App) Initialize(config *config.Config) {
 
 	log.Printf("DB URI: %s\n", psqlInfo)
 
-	a.DB, err = gorm.Open(config.DB.Dialect, psqlInfo)
-	if err != nil {
-		log.Printf("Could not connect to %s database\n", config.DB.Dialect)
-	} else {
-		log.Printf("We are connected to the %s database\n", config.DB.Dialect)
-	}
+	es, err := services.NewEmployeeService(psqlInfo)
+	must(err)
 
-	if err = a.DB.DB().Ping(); err != nil {
-		log.Printf("DB Error: %s", err.Error())
-	}
+	defer es.Close()
+	es.AutoMigrate()
 
-	a.DB.AutoMigrate(&model.Employee{}) //database migration
-	a.Router = mux.NewRouter()
-	a.setRouters()
-}
+	employeeH := handlers.NewEmployees(es)
 
-// Set all required routers
-func (a *App) setRouters() {
+	a.sm = mux.NewRouter()
+
 	// Routing for handling the projects
-	a.Get("/employees", a.GetAllEmployees)
-	a.Post("/employees", a.CreateEmployee)
-	a.Get("/employees/{title}", a.GetEmployee)
-	a.Put("/employees/{title}", a.UpdateEmployee)
-	a.Delete("/employees/{title}", a.DeleteEmployee)
-	a.Put("/employees/{title}/disable", a.DisableEmployee)
-	a.Put("/employees/{title}/enable", a.EnableEmployee)
-}
+	a.sm.Methods(http.MethodGet).Subrouter().HandleFunc("/employees", employeeH.GetAllEmployees)
+	a.sm.Methods(http.MethodPost).Subrouter().HandleFunc("/employees", employeeH.CreateEmployee)
+	a.sm.Methods(http.MethodGet).Subrouter().HandleFunc("/employees/{title}", employeeH.GetEmployee)
+	a.sm.Methods(http.MethodPut).Subrouter().HandleFunc("/employees/{title}", employeeH.UpdateEmployee)
+	a.sm.Methods(http.MethodDelete).Subrouter().HandleFunc("/employees/{title}", employeeH.DeleteEmployee)
+	a.sm.Methods(http.MethodPut).Subrouter().HandleFunc("/employees/{title}/disable", employeeH.DisableEmployee)
+	a.sm.Methods(http.MethodPut).Subrouter().HandleFunc("/employees/{title}/enable", employeeH.EnableEmployee)
 
-// Get wrapper method
-func (a *App) Get(path string, f func(w http.ResponseWriter, r *http.Request)) {
-	a.Router.Methods(http.MethodGet).Subrouter().HandleFunc(path, f)
-}
-
-// Post wrapper method
-func (a *App) Post(path string, f func(w http.ResponseWriter, r *http.Request)) {
-	a.Router.Methods(http.MethodPost).Subrouter().HandleFunc(path, f)
-}
-
-// Put wrapper method
-func (a *App) Put(path string, f func(w http.ResponseWriter, r *http.Request)) {
-	a.Router.Methods(http.MethodPut).Subrouter().HandleFunc(path, f)
-}
-
-// Delete wrapper method
-func (a *App) Delete(path string, f func(w http.ResponseWriter, r *http.Request)) {
-	a.Router.Methods(http.MethodDelete).Subrouter().HandleFunc(path, f)
-}
-
-// GetAllEmployees handler
-func (a *App) GetAllEmployees(w http.ResponseWriter, r *http.Request) {
-	handler.GetAllEmployees(a.DB, w, r)
-}
-
-// CreateEmployee handler
-func (a *App) CreateEmployee(w http.ResponseWriter, r *http.Request) {
-	handler.CreateEmployee(a.DB, w, r)
-}
-
-// GetEmployee handler
-func (a *App) GetEmployee(w http.ResponseWriter, r *http.Request) {
-	handler.GetEmployee(a.DB, w, r)
-}
-
-// UpdateEmployee handler
-func (a *App) UpdateEmployee(w http.ResponseWriter, r *http.Request) {
-	handler.UpdateEmployee(a.DB, w, r)
-}
-
-// DeleteEmployee handler
-func (a *App) DeleteEmployee(w http.ResponseWriter, r *http.Request) {
-	handler.DeleteEmployee(a.DB, w, r)
-}
-
-// DisableEmployee handler
-func (a *App) DisableEmployee(w http.ResponseWriter, r *http.Request) {
-	handler.DisableEmployee(a.DB, w, r)
-}
-
-// EnableEmployee handler
-func (a *App) EnableEmployee(w http.ResponseWriter, r *http.Request) {
-	handler.EnableEmployee(a.DB, w, r)
-}
-
-// Run the app on it's router
-func (a *App) Run(host string) {
-	log.Fatal(http.ListenAndServe(host, a.Router))
+	http.ListenAndServe(":"+os.Getenv("APPORT"), a.sm)
 }

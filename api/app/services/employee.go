@@ -33,7 +33,7 @@ func NewEmployeeService(connectionInfo string) (*EmployeeService, error) {
 }
 
 // ByID will look up a employee by id provided
-// 1 - user, nil
+// 1 - employee, nil
 // 2 - nil, ErrNoFound
 // 3 - nil, otherError
 func (es *EmployeeService) ByID(id uint) (*models.Employee, error) {
@@ -44,7 +44,7 @@ func (es *EmployeeService) ByID(id uint) (*models.Employee, error) {
 }
 
 // ByName will look up a employee by name provided
-// 1 - user, nil
+// 1 - employee, nil
 // 2 - nil, ErrNoFound
 // 3 - nil, otherError
 func (es *EmployeeService) ByName(name string) (*models.Employee, error) {
@@ -55,7 +55,7 @@ func (es *EmployeeService) ByName(name string) (*models.Employee, error) {
 }
 
 // ByCity will look up a employee by name provided
-// 1 - user, nil
+// 1 - employee, nil
 // 2 - nil, ErrNoFound
 // 3 - nil, otherError
 func (es *EmployeeService) ByCity(city string) (*[]models.Employee) {
@@ -89,7 +89,7 @@ func (es *EmployeeService) Create(employee *models.Employee) error {
 	return es.db.Create(&employee).Error
 }
 
-// Update will update user provisioned with user object
+// Update will update employee provisioned with employee object
 func (es *EmployeeService) Update(employee *models.Employee) error {
 	return es.db.Save(&employee).Error
 }

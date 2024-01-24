@@ -20,7 +20,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Start a new stage from scratch
-FROM alpine:3.18.5
+FROM alpine:3
 # Import the user and group files from the builder.
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
